@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Balloon Squad - Play!</title>
+    <link rel="stylesheet" href="tailwind-built.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bubblegum+Sans&family=Fredoka:wght@400;700&display=swap"
+        rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        body {
+            font-family: 'Bubblegum Sans', cursive;
+            background: #a29bfe;
+            margin: 0;
+            overflow: hidden;
+            touch-action: none;
+        }
+
+        #game-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, #81ecec, #a29bfe);
+        }
+
+        .balloon {
+            position: absolute;
+            cursor: pointer;
+            transition: transform 0.1s;
+        }
+
+        .balloon:active {
+            transform: scale(0.9);
+        }
+
+        .score-ui {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 12px 24px;
+            border-radius: 24px;
+            border: 2px solid rgba(255, 255, 255, 0.4);
+            box-shadow: 0 10px 32px rgba(0, 0, 0, 0.1);
+            color: #ffffff;
+            font-size: 2.2275rem;
+            font-weight: 800;
+            z-index: 100;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .lives-ui {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 10px 15px;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            z-index: 100;
+            display: flex;
+            gap: 8px;
+        }
+
+        .heart {
+            color: #ff4757;
+            width: 32px;
+            height: 32px;
+            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .heart.lost {
+            opacity: 0.2;
+            filter: grayscale(1);
+            transform: scale(0.8);
+        }
+
+        .star-icon {
+            color: #f1c40f;
+            width: 50px;
+            height: 50px;
+            filter: drop-shadow(0 0 10px rgba(241, 196, 15, 0.3));
+        }
+
+        #game-over {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 50%, #a29bfe 100%);
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #game-over.active {
+            display: flex;
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Simple Child-Friendly Card */
+        .simple-card {
+            background: white;
+            border-radius: 40px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+            max-width: 380px;
+            width: 90%;
+        }
+
+
+
+        @keyframes bounce {
+
+            0%,
+            100% {
+                transform: translateY(0);
+            }
+
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        .rainbow-score {
+            background: linear-gradient(to right, #ff6b6b, #f9ca24, #6ab04c, #4834df, #e056fd);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 6rem;
+            font-weight: 900;
+            line-height: 1;
+            margin: 0.5rem 0;
+            font-family: 'Bubblegum Sans', cursive;
+        }
+
+        .score-label {
+            font-size: 1.8rem;
+            color: #7f8c8d;
+            font-weight: 900;
+            margin-bottom: 0.3rem;
+            font-family: 'Bubblegum Sans', cursive;
+        }
+
+        .play-again-btn {
+            background: #4ade80;
+            color: white;
+            font-size: 2rem;
+            font-weight: 900;
+            padding: 1rem 2.5rem;
+            border-radius: 40px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 8px 0 #22c55e, 0 12px 25px rgba(74, 222, 128, 0.3);
+            transition: all 0.2s;
+            font-family: 'Bubblegum Sans', cursive;
+            margin-top: 2rem;
+            width: 100%;
+        }
+
+        .play-again-btn:active {
+            transform: translateY(6px);
+            box-shadow: 0 2px 0 #22c55e, 0 5px 15px rgba(74, 222, 128, 0.3);
+        }
+
+        .menu-link {
+            display: block;
+            color: #95a5a6;
+            font-size: 1.3rem;
+            margin-top: 1rem;
+            text-decoration: none;
+            font-weight: 700;
+            font-family: 'Bubblegum Sans', cursive;
+            transition: color 0.2s;
+        }
+
+        .menu-link:hover {
+            color: #7f8c8d;
+        }
+
+        .stars-container {
+            display: flex;
+            justify-content: center;
+            gap: 0.8rem;
+            margin: 1.5rem 0;
+        }
+
+        .star {
+            font-size: 3rem;
+            filter: grayscale(100%);
+            opacity: 0.3;
+            transition: all 0.5s;
+        }
+
+        .star.active {
+            filter: grayscale(0%);
+            opacity: 1;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="game-container">
+        <!-- UI Elements -->
+        <div class="score-ui" id="score-display">Score: 0</div>
+        <div class="lives-ui" id="lives-display">
+            <i data-lucide="heart" class="heart fill-current"></i>
+            <i data-lucide="heart" class="heart fill-current"></i>
+            <i data-lucide="heart" class="heart fill-current"></i>
+        </div>
+
+        <!-- Back Button -->
+        <button onclick="window.location.href='index.html'"
+            class="absolute bottom-5 right-5 bg-white/20 hover:bg-white/40 text-white p-4 rounded-full transition-all z-100 flex items-center justify-center border-2 border-white/20 backdrop-blur-md">
+            <i data-lucide="home" class="w-6 h-6"></i>
+        </button>
+    </div>
+
+    <!-- Game Over Modal -->
+    <div id="game-over">
+        <div class="simple-card scale-0" id="over-card">
+
+            <!-- Stars -->
+            <div class="stars-container">
+                <span class="star" id="star1">⭐</span>
+                <span class="star" id="star2">⭐</span>
+                <span class="star" id="star3">⭐</span>
+            </div>
+
+            <!-- Score Label -->
+            <div class="score-label">Your Score</div>
+
+            <!-- Score -->
+            <div class="rainbow-score" id="final-score">0</div>
+
+            <!-- Play Again Button -->
+            <button onclick="location.reload()" class="play-again-btn">
+                Play Again! 🚀
+            </button>
+
+            <!-- Menu Link -->
+            <a href="index.html" class="menu-link">Menu 🏠</a>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
+</body>
+
+</html>
